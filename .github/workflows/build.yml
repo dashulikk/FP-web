@@ -1,0 +1,53 @@
+name: Python Web App Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: |
+        python -m venv venv
+        . venv/bin/activate
+        pip install -r requirements.txt
+
+    # Step 4: Run tests with pytest and generate test report
+    - name: Run unit tests with pytest
+      run: |
+        . venv/bin/activate
+        pytest --junitxml=report.xml
+      continue-on-error: false
+
+    # Step 5: Upload test report as an artifact
+    - name: Upload test report
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-report
+        path: report.xml
+
+    # Step 6: Zip the web app (for simplicity, zipping the whole project)
+    - name: Create artifact
+      run: zip -r web_app.zip .
+
+    # Step 7: Upload the artifact
+    - name: Upload web app artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: web-app-artifact
+        path: web_app.zip
