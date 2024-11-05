@@ -38,8 +38,8 @@ jobs:
         # Install k6
         sudo apt install snapd
         sudo snap install k6
+        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
         sudo go install go.k6.io/xk6/cmd/xk6@latest
-        export PATH=$(go env GOPATH)/bin:$PATH
         xk6 build --with github.com/grafana/xk6-output-influxdb
 
     # Step 4: Run unit tests with pytest and generate test report
