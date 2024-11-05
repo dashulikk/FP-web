@@ -24,14 +24,17 @@ jobs:
       with:
         python-version: '3.10'
 
-    # Step 3: Install dependencies
+    # Step 3: Install dependencies including k6
     - name: Install dependencies
       run: |
         python -m venv venv
         . venv/bin/activate
         pip install -r requirements.txt
+        # Install k6 from package repository
+        curl -s https://packagecloud.io/install/repositories/grafana/stable/script.deb.sh | sudo bash
+        sudo apt install k6
 
-    # Step 4: Run tests with pytest and generate test report
+    # Step 4: Run unit tests with pytest and generate test report
     - name: Run unit tests with pytest
       run: |
         . venv/bin/activate
@@ -45,11 +48,27 @@ jobs:
         name: pytest-report
         path: report.xml
 
-    # Step 6: Zip the web app (for simplicity, zipping the whole project)
+    # Step 6: Run k6 performance tests and export to InfluxDB
+    - name: Run k6 performance tests
+      env:
+        K6_INFLUXDB_ORGANIZATION: university
+        K6_INFLUXDB_BUCKET: k6data
+        K6_INFLUXDB_TOKEN: flOyFmlyXDv69oTn2TVUmN0qxOvu02oHveer-4UjkV_LbqqeeQjKbwSIQjTvyPenSvKltAjHJyS6Jcj9DiFxWQ==
+      run: |
+        ./k6 run -o xk6-influxdb=http://localhost:8090 load_test.js --summary-export=output.json
+
+    # Step 7: Upload the k6 JSON report as an artifact
+    - name: Upload k6 JSON report
+      uses: actions/upload-artifact@v3
+      with:
+        name: k6-output-json
+        path: output.json
+
+    # Step 8: Zip the web app (for simplicity, zipping the whole project)
     - name: Create artifact
       run: zip -r web_app.zip .
 
-    # Step 7: Upload the artifact
+    # Step 9: Upload the artifact
     - name: Upload web app artifact
       uses: actions/upload-artifact@v3
       with:
