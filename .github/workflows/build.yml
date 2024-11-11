@@ -39,7 +39,7 @@ jobs:
     - name: Start FastAPI app
       run: |
         . venv/bin/activate
-        nohup uvicorn your_app_module_name:app --host 0.0.0.0 --port 8000 &
+        nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
       env:
         PYTHONPATH: .
 
