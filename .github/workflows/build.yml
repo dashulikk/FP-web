@@ -35,6 +35,25 @@ jobs:
         sudo apt install -y snapd
         sudo snap install k6
 
+    # Step 4: Start FastAPI application in the background
+    - name: Start FastAPI app
+      run: |
+        . venv/bin/activate
+        nohup uvicorn your_app_module_name:app --host 0.0.0.0 --port 8000 &
+      env:
+        PYTHONPATH: .
+
+    # Step 5: Wait for server to be ready
+    - name: Wait for server to be ready
+      run: |
+        for i in {1..10}; do
+          if nc -zv localhost 8000; then
+            echo "Server is ready!"
+            break
+          fi
+          echo "Waiting for server..."
+          sleep 3
+        done
 
     # Step 6: Run unit tests with pytest and generate test report
     - name: Run unit tests with pytest
