@@ -35,41 +35,49 @@ jobs:
         sudo apt install -y snapd
         sudo snap install k6
 
-    # Step 4: Run unit tests with pytest and generate test report
+    # Step 4: Start FastAPI application
+    - name: Start FastAPI app
+      run: |
+        . venv/bin/activate
+        nohup uvicorn your_app_module_name:app --host 0.0.0.0 --port 8000 &
+      env:
+        PYTHONPATH: .
+
+    # Step 5: Wait for server to start
+    - name: Wait for server to start
+      run: sleep 10
+
+    # Step 6: Run unit tests with pytest and generate test report
     - name: Run unit tests with pytest
       run: |
         . venv/bin/activate
         pytest --junitxml=report.xml
       continue-on-error: false
 
-    # Step 5: Upload test report as an artifact
+    # Step 7: Upload test report as an artifact
     - name: Upload test report
       uses: actions/upload-artifact@v3
       with:
         name: pytest-report
         path: report.xml
 
-    # Step 6: Run k6 performance tests and export to JSON
+    # Step 8: Run k6 performance tests and export to JSON
     - name: Run k6 performance tests
-      env:
-        K6_INFLUXDB_ORGANIZATION: university
-        K6_INFLUXDB_BUCKET: k6data
-        K6_INFLUXDB_TOKEN: flOyFmlyXDv69oTn2TVUmN0qxOvu02oHveer-4UjkV_LbqqeeQjKbwSIQjTvyPenSvKltAjHJyS6Jcj9DiFxWQ==
       run: |
         k6 run load_test.js --summary-export=output.json
 
-    # Step 7: Upload the k6 JSON report as an artifact
+    # Step 9: Upload the k6 JSON report as an artifact
     - name: Upload k6 JSON report
       uses: actions/upload-artifact@v3
       with:
         name: k6-output-json
         path: output.json
 
-    # Step 8: Zip the web app (for simplicity, zipping the whole project)
+    # Step 10: Zip the web app (for simplicity, zipping the whole project)
     - name: Create artifact
       run: zip -r web_app.zip .
 
-    # Step 9: Upload the artifact
+    # Step 11: Upload the artifact
     - name: Upload web app artifact
       uses: actions/upload-artifact@v3
       with:
