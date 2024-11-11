@@ -24,25 +24,16 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 1.20
-
-    # Step 3: Install dependencies including k6
+    # Step 3: Install dependencies and k6
     - name: Install dependencies
       run: |
         python -m venv venv
         . venv/bin/activate
         pip install -r requirements.txt
-        # Install k6
-        sudo apt install snapd
+        # Install k6 via snap
+        sudo apt update
+        sudo apt install -y snapd
         sudo snap install k6
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-        echo "/usr/local/go/bin" >> $GITHUB_PATH
-        sudo go install go.k6.io/xk6/cmd/xk6@latest
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-        xk6 build --with github.com/grafana/xk6-output-influxdb
 
     # Step 4: Run unit tests with pytest and generate test report
     - name: Run unit tests with pytest
@@ -58,14 +49,14 @@ jobs:
         name: pytest-report
         path: report.xml
 
-    # Step 6: Run k6 performance tests and export to InfluxDB
+    # Step 6: Run k6 performance tests and export to JSON
     - name: Run k6 performance tests
       env:
         K6_INFLUXDB_ORGANIZATION: university
         K6_INFLUXDB_BUCKET: k6data
         K6_INFLUXDB_TOKEN: flOyFmlyXDv69oTn2TVUmN0qxOvu02oHveer-4UjkV_LbqqeeQjKbwSIQjTvyPenSvKltAjHJyS6Jcj9DiFxWQ==
       run: |
-        ./k6 run -o xk6-influxdb=http://localhost:8090 load_test.js --summary-export=output.json
+        k6 run load_test.js --summary-export=output.json
 
     # Step 7: Upload the k6 JSON report as an artifact
     - name: Upload k6 JSON report
@@ -79,7 +70,6 @@ jobs:
       run: zip -r web_app.zip .
 
     # Step 9: Upload the artifact
-    - name: Upload web app artifact
       uses: actions/upload-artifact@v3
       with:
         name: web-app-artifact

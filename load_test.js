@@ -39,7 +39,7 @@ export default function () {
     let productId = 1;
     let res1 = http.get(`http://127.0.0.1:8000/products/${productId}`);
     check(res1, { 'status is 200': (r) => r.status === 200 });
-
+    sleep(1);
     let res2 = http.get('http://127.0.0.1:8000/external-api');
     check(res2, { 'status is 200': (r) => r.status === 200 });
 
