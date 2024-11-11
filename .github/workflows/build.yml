@@ -70,6 +70,7 @@ jobs:
       run: zip -r web_app.zip .
 
     # Step 9: Upload the artifact
+    - name: Upload web app artifact
       uses: actions/upload-artifact@v3
       with:
         name: web-app-artifact
