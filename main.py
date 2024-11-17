@@ -6,6 +6,8 @@ import psycopg2
 import os
 import sys
 import redis
+from fastapi.responses import FileResponse
+
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -98,3 +100,9 @@ def get_value(key: str):
     if value:
         return {"key": key, "value": value, "args": sys.argv}
     return {"error": "Key not found"}
+
+
+@app.get("/image")
+async def get_image():
+    image_path = "static/pepe-the-frog.jpg"
+    return FileResponse(image_path)
