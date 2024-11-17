@@ -1,10 +1,11 @@
 from functools import lru_cache
-
 import time
 from fastapi import FastAPI, HTTPException
 import requests
 import psycopg2
 import os
+import sys
+import redis
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -47,6 +48,10 @@ def get_users():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/args")
+def get_port():
+    return {"Args": sys.argv}
+
 @app.get("/cache_compare")
 def compare_cache_performance():
     TRIES = 10
@@ -71,3 +76,19 @@ def compare_cache_performance():
     cache_time /= TRIES
 
     return {"cache_time (avg seconds for request)": cache_time, "no_cache_time (avg seconds for request)": no_cache_time, "speed-up": no_cache_time / cache_time}
+
+
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+@app.get("/set/{key}/{value}")
+def set_value(key: str, value: str):
+    # Set a value in Redis
+    r.set(key, value)
+    return {"message": f"Key {key} set successfully"}
+
+@app.get("/get/{key}")
+def get_value(key: str):
+    # Get a value from Redis
+    value = r.get(key)
+    if value:
+        return {"key": key, "value": value, "args": sys.argv}
+    return {"error": "Key not found"}
