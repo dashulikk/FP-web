@@ -27,8 +27,6 @@ jobs:
     # Step 3: Install dependencies and k6
     - name: Install dependencies
       run: |
-        python -m venv venv
-        . venv/bin/activate
         pip install -r requirements.txt
         # Install k6 via snap
         sudo apt update
@@ -38,7 +36,6 @@ jobs:
     # Step 4: Start FastAPI application in the background
     - name: Start FastAPI app
       run: |
-        . venv/bin/activate
         nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
       env:
         PYTHONPATH: .
@@ -58,7 +55,6 @@ jobs:
     # Step 6: Run unit tests with pytest and generate test report
     - name: Run unit tests with pytest
       run: |
-        . venv/bin/activate
         pytest --junitxml=report.xml
       continue-on-error: false
 
