@@ -3,3 +3,6 @@ gunicorn==20.1.0
 pytest==7.1.2
 uvicorn==0.22.0
 fastapi
+requests
+redis
+psycopg2-binary
