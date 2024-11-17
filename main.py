@@ -50,6 +50,8 @@ def get_users():
 @app.get("/cache_compare")
 def compare_cache_performance():
     TRIES = 10
+
+    # Test no-cache: slow
     no_cache_time = 0
     for _ in range(TRIES):
         start = time.time()
@@ -58,6 +60,7 @@ def compare_cache_performance():
         no_cache_time += end-start
     no_cache_time /= TRIES
 
+    # Test cache: fast
     cache_time = 0
     for _ in range(TRIES):
         start = time.time()
@@ -67,4 +70,4 @@ def compare_cache_performance():
 
     cache_time /= TRIES
 
-    return {"cache_time": cache_time, "no_cache_time": no_cache_time, "speed-up": no_cache_time / cache_time}
+    return {"cache_time (avg seconds for request)": cache_time, "no_cache_time (avg seconds for request)": no_cache_time, "speed-up": no_cache_time / cache_time}
