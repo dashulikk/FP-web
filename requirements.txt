@@ -6,3 +6,4 @@ fastapi
 requests
 redis
 psycopg2-binary
+prometheus_fastapi_instrumentator
