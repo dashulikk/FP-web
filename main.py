@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException
 import requests
 import psycopg2
+import os
 
 def get_db_connection():
     conn = psycopg2.connect(
-        dbname="web_app_db", user="postgres", password="postgres", host="localhost"
+        dbname="web_app_db", user="postgres", password=os.getenv("DB_PASSWORD"), host="localhost"
     )
     return conn
 
