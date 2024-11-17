@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+import time
 from fastapi import FastAPI, HTTPException
 import requests
 import psycopg2
@@ -21,7 +24,15 @@ def call_external_api():
     response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
     return response.json()
 
+@lru_cache
+def call_external_api_cached():
+    return call_external_api()
+
 @app.get("/users/")
+def fetch_users():
+    return get_users()
+
+
 def get_users():
     try:
         conn = get_db_connection()
@@ -36,3 +47,24 @@ def get_users():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/cache_compare")
+def compare_cache_performance():
+    TRIES = 10
+    no_cache_time = 0
+    for _ in range(TRIES):
+        start = time.time()
+        call_external_api()
+        end = time.time()
+        no_cache_time += end-start
+    no_cache_time /= TRIES
+
+    cache_time = 0
+    for _ in range(TRIES):
+        start = time.time()
+        call_external_api_cached()
+        end = time.time()
+        cache_time += end - start
+
+    cache_time /= TRIES
+
+    return {"cache_time": cache_time, "no_cache_time": no_cache_time, "speed-up": no_cache_time / cache_time}
