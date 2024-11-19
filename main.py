@@ -88,7 +88,7 @@ def set_value(key: str, value: str):
     return {"message": f"Key {key} set successfully"}
 
 @app.get("/delete/{key}")
-def set_value(key: str):
+def delete_value(key: str):
     # Set a value in Redis
     r.delete(key)
     return {"message": f"Key {key} deleted successfully"}
