@@ -80,29 +80,63 @@ def compare_cache_performance():
     return {"cache_time (avg seconds for request)": cache_time, "no_cache_time (avg seconds for request)": no_cache_time, "speed-up": no_cache_time / cache_time}
 
 
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+
 @app.get("/set/{key}/{value}")
-def set_value(key: str, value: str):
-    # Set a value in Redis
-    r.set(key, value)
-    return {"message": f"Key {key} set successfully"}
+def set_value(key: str, value: str, ttl: int = 300):  # default TTL 300s
+    try:
+        r.set(key, value, ex=ttl)
+        return {"message": f"Key '{key}' set successfully with default TTL {ttl} seconds"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/delete/{key}")
 def delete_value(key: str):
-    # Set a value in Redis
     r.delete(key)
     return {"message": f"Key {key} deleted successfully"}
 
 @app.get("/get/{key}")
 def get_value(key: str):
-    # Get a value from Redis
     value = r.get(key)
     if value:
-        return {"key": key, "value": value, "args": sys.argv}
-    return {"error": "Key not found"}
+        current_ttl = r.ttl(key)
+        if current_ttl > 0:
+            new_ttl = current_ttl + 10
+            r.expire(key, new_ttl)
+        return {"key": key, "value": value, "new_ttl": r.ttl(key)}
+    raise HTTPException(status_code=404, detail=f"Key '{key}' not found")
+@app.get("/store-image")
+def store_image_in_redis():
+    try:
+        image_path = "static/pepe-the-frog.jpg"
+        with open(image_path, "rb") as img_file:
+            img_data = img_file.read()  # bytes
+        r.set("image:pepe", img_data)  # save bytes in Redis
+        return {"message": "Image stored successfully in Redis"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/image")
-async def get_image():
-    image_path = "static/pepe-the-frog.jpg"
-    return FileResponse(image_path)
+async def get_image_from_redis():
+    try:
+        img_data = r.get("image:pepe")
+        if not img_data:
+            raise HTTPException(status_code=404, detail="Image not found in Redis")
+        temp_image_path = "temp_pepe.jpg"
+        with open(temp_image_path, "wb") as temp_file:
+            temp_file.write(img_data)
+        return FileResponse(temp_image_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/ttl/{key}")
+def get_key_ttl(key: str):
+    try:
+        ttl = r.ttl(key)
+        if ttl == -2:
+            raise HTTPException(status_code=404, detail=f"Key '{key}' does not exist")
+        if ttl == -1:
+            return {"key": key, "message": "Key exists but has no TTL"}
+        return {"key": key, "ttl": ttl}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
